@@ -1,5 +1,4 @@
 f = open("input_2.txt")
-
 # A rock, B paper, C Scissors
 # X rock, Y paper, Z Scissors
 
