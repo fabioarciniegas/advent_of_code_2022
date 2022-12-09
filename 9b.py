@@ -17,10 +17,6 @@ def sub(t1, t2):
     return tuple(map(operator.sub, t1, t2))
 
 
-def dist(t1, t2):
-    return abs(t1[0] - t2[0]) + abs(t1[1] - t2[1])
-
-
 def catchup(H, T):
     diff = sub(H, T)
     moveto = {
@@ -82,5 +78,5 @@ for l in f:
             (rope[i], rope[i - 1]) = catchup(rope[i], rope[i - 1])
             m[rope[0]]=1
         n = n - 1
-#        print(rope)
+
 print(np.count_nonzero(m))
