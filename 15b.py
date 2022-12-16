@@ -84,23 +84,8 @@ for row in range(0,4000000):
             continue
     non_overlapping.append(curs)
 
-    #--- got all overlapping for this row across all beacons
-    
-    # if len(non_overlapping) > 1:
-    #     print(len(non_overlapping))
-    #     print("more than one non overlapping in row",row)
-    #     print("namely:",non_overlapping)
-
     if len(non_overlapping) == 2:
         if non_overlapping[1][0] - non_overlapping[0][1] == 2:
             print("x:",non_overlapping[1][0]-1,"y:",row)
             print((non_overlapping[1][0]-1) * 4000000 + row)
-#    all_in_row.append(non_overlapping[0])
-#    if len(set(all_in_row))==2:
-#print(row,"all discarded:",discarded)
-#        print(row,"segments seen by all beacons in row",set(all_in_row))
-    
-#    for i in non_overlapping:
-#        count += i[1]-i[0]
-#    print("sanity count for row:",row,":",count)
-
+            break
