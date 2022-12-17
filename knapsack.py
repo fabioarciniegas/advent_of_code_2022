@@ -39,7 +39,6 @@ def reconstruct_knapsack(A,items,capacity):
 
 x,solutions = knapsack(capacity, items)
 
-print(items)
 print(x)
 print(solutions)
 print(reconstruct_knapsack(solutions,items,capacity))
@@ -64,6 +63,7 @@ x,solutions = knapsack(10, items)
 print(items)
 print(x)
 print(solutions)
+
 print(reconstruct_knapsack(solutions,items,capacity))
 
 
