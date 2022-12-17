@@ -5,6 +5,8 @@ np.set_printoptions(threshold=np.inf, linewidth=1000)
 items = [[3, 4], [2, 3], [4, 2], [4, 3]]
 
 capacity = 6
+np.set_printoptions(threshold=np.inf, linewidth=1000)
+
 
 def knapsack(capacity, items):
     solutions = np.zeros((len(items)+1, capacity+1))
