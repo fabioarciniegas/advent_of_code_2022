@@ -27,6 +27,9 @@ def shift3(a,i,n):
             a[:] = [e]+a[:-1]
             i = 0
             a[i], a[i+inc] = a[i+inc], a[i]
+        if dir == 1 and i == len(a):
+            print("ka kaw!!!")
+        
         if dir == -1 and i > 1:
             a[i], a[i+inc] = a[i+inc], a[i]
         if dir == -1 and i == 1:
@@ -34,21 +37,26 @@ def shift3(a,i,n):
             a[:] = a[1:]+[e]
             i = len(a)
         if dir == -1 and i == 0:
-            a[:] = a[1:]+[e]            
+            print("ka kaw?")
+            a[:] = a[1:]+[e]
             i = len(a)-1
-            a[i], a[i+inc] = a[i+inc], a[i]            
-            
-
-            
+            a[i], a[i+inc] = a[i+inc], a[i]
         i += inc
-        print(a)
+    return i+= -inc
+#        print(a)
 
     
 def mix(data,order):
+    seen = {}
     for e in order:
-        print(data,e,":")
-        i = data.index(e)
-        shift3(data,i,e)
+#        print(data,e,":")
+        if not e in seen:
+            seen[e] = []
+        data.findall(e)
+        for pos in data.findall(e):
+            if pos in seen[e]:
+                continue
+        shift3(data,pos,e)
 #        print(f"result of shifting {e} by {e} (in pos {i}):\n{data}")
 
 
@@ -57,13 +65,18 @@ if len(sys.argv) > 1:
 else:
     print("usage: python 20.py <filename>")
 
-data, order = read_input(filename)
+data, order, seen = read_input(filename)
 mix(data,order)
 
+#shift3(data,0,-4)
 z = data.index(0)
-print(data)
+#print(data)
 print(z)
-print(data[(z+1000)%len(data)]+data[(z+2000)%len(data)]+data[(z+3000)%len(data)])
+a = data[(z+1000)%len(data)]
+b = data[(z+2000)%len(data)]
+c = data[(z+3000)%len(data)]
+print(a,b,c)
+print(a+b+c)
 
 
 #    for i in order:
