@@ -19,18 +19,27 @@ def shift3(a,i,n):
     dir = 1 if n > 0 else -1
     inc = 1 if n > 0 else -1
     e = a[i]
+    nm = n % len(a)
     for x in range(abs(n)):
         if dir == 1 and i < len(a)-1:
             a[i], a[i+inc] = a[i+inc], a[i]
-        if dir == 1 and i == len(a):
+        if dir == 1 and i == len(a)-1:
             a[:] = [e]+a[:-1]
             i = 0
             a[i], a[i+inc] = a[i+inc], a[i]
-        if dir == -1 and i > 0:
+        if dir == -1 and i > 1:
             a[i], a[i+inc] = a[i+inc], a[i]
         if dir == -1 and i == 1:
+            a[i], a[i+inc] = a[i+inc], a[i]            
             a[:] = a[1:]+[e]
-            i = len(a)           
+            i = len(a)
+        if dir == -1 and i == 0:
+            a[:] = a[1:]+[e]            
+            i = len(a)-1
+            a[i], a[i+inc] = a[i+inc], a[i]            
+            
+
+            
         i += inc
         print(a)
 
@@ -61,3 +70,4 @@ print(data[(z+1000)%len(data)]+data[(z+2000)%len(data)]+data[(z+3000)%len(data)]
 
 #13642
 #13972
+#4709
