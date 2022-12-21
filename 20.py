@@ -60,11 +60,19 @@ def shift3(a,i,n,s):
 def mix(data,order,seen):
     for e in order:
         for pos in [i for i in range(len(data)) if data[i] == e]:
-#            print("duplicate",pos)
             if seen[pos] == 1:
+                print("duplicate",pos)
                 continue
+        before = len([1 for i in range(len(seen)) if seen[i] == 1])
+        print(seen)
         
         shift3(data,pos,e,seen)
+        after = len([1 for i in range(len(seen)) if seen[i] == 1])
+        if before== after:
+            print("no progress")
+        print(seen)
+                    
+
 #        print(f"result of shifting {e} by {e} (in pos {i}):\n{data}")
 
 
