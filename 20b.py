@@ -9,28 +9,31 @@ from logging import warning as W
 np.set_printoptions(threshold=np.inf, linewidth=1000)
 
 def read_input(filename,key=1):
-    order = []
     result = []
     seen = []
     f = open(filename)
+    i = 0
     for l in f:
         l.strip()
-        order.append(int(l)*key)
         result.append(int(l)*key)
-        seen.append(0)
-    return order, result, seen
+        # seen will be rotated and modified, mirroring the data
+        # so after any number of operations we can ask where the
+        # original item is now (even though there are duplicates!)
+        seen.append(i)
+        i +=1
+    return result, seen
 
-def shift3(a,i,n,s):
+# Note: this could be done with a linked list, 
+# but still totally ok (and fast) with lists treated as arrays
+def shift_cyclical(a,i,n,s):
     dir = 1 if n > 0 else -1
     inc = 1 if n > 0 else -1
     e = a[i]
-    s[i] = 1
+#    s[i] = -1 # seen. Only items whose original order have not been processed should have a non neg
     se = s[i]
     nm = (abs(e)) % (len(a)-1)
     if n < 0:
         nm = -nm
-    if nm == 0 and e!= 0:
-        W(f"nm:{nm}, e:{e} i:{i} is multiple of len(a-1) {len(a)-1}")
     D(f"n:{n},nm:{nm}")
     for x in range(abs(nm)):
         if dir == 1 and i < len(a)-1:
@@ -42,8 +45,6 @@ def shift3(a,i,n,s):
             i = 0
             a[i], a[i+inc] = a[i+inc], a[i]
             s[i], s[i+inc] = s[i+inc], s[i]
-        if dir == 1 and i == len(a):
-            W("rare")
 
         if dir == -1 and i > 1:
             a[i], a[i+inc] = a[i+inc], a[i]
@@ -65,30 +66,18 @@ def shift3(a,i,n,s):
     return i
 
     
-def mix(data,order,seen):
-    for e in order:
-        D(f"{data} : {e}")
-        for pos in [i for i in range(len(data)) if data[i] == e]:
-            if seen[pos] == 1:
-                continue
-            else:
-                break
-            
-        before = len([1 for i in range(len(seen)) if seen[i] == 1])
-        shift3(data,pos,e,seen)
-        after = len([1 for i in range(len(seen)) if seen[i] == 1])
-        if before== after:
-            logging.warning("No progress for {e}.")
+def mix(data,seen):
+    for i in range(len(data)):
+        D(f"{i} : {data[i]}")
+        pos = seen.index(i)
+        shift_cyclical(data,pos,data[pos],seen)
 
-                    
-
-#        print(f"result of shifting {e} by {e} (in pos {i}):\n{data}")
 
 def grove_coords(data):
     z = data.index(0)
     D(data)
     D(z)
-    W(f"z:{z} len(data):{len(data)}")
+    D(f"z:{z} len(data):{len(data)}")
     a = data[(z+1000)%len(data)]
     b = data[(z+2000)%len(data)]
     c = data[(z+3000)%len(data)]
@@ -103,56 +92,23 @@ if len(sys.argv) > 1:
         logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
     else:
         logging.basicConfig(stream=sys.stderr, level=logging.WARNING)
-
-        
-    
 else:
     print("usage: python 20.py <filename>")
 
-    
-#data, order, seen = read_input(filename,811589153)
-data, order, seen = read_input(filename)
+data, seen = read_input(filename)
 
-mix(data,order,seen)
+mix(data,seen)
 
-print("sum of coordinates (part 2):",grove_coords(data))
+print("sum of coordinates (part 1):",grove_coords(data))
 
-# data = [0,0,0,0,4,0,0]
-# seen = [0 for i in range(len(data))]
-# shift3(data,4,-20,seen)
-# data = [0,0,0,0,4,0,0]
-# seen = [0 for i in range(len(data))]
-# shift3(data,4,-6,seen)
+data,seen = read_input(filename,811589153)
 
-# data = [0,0,0,0,4,0,0]
-# seen = [0 for i in range(len(data))]
-# shift3(data,4,20,seen)
-
-# data = [0,0,0,0,4,0,0]
-# seen = [0 for i in range(len(data))]
-# shift3(data,4,6,seen)
-
-# exit(2)
-
-#print(data)
-data,order,seen = read_input(filename,811589153)
+D(data)
 
 for times in range(0,10):
+    mix(data,seen)
+    D(f"-------------------------------------------After {times+1} rounds of mixing:")
     D(data)
-    mix(data,order,seen)
-    seen = [0 for i in range(len(data))]
-    W(f"-------------------------------------------After {times+1} rounds of mixing:")
-    print("sum of coordinates (part 2):",grove_coords(data))
-    D(data)
-#    print(data)
 
 print("sum of coordinates after 10 shifts (part 2):",grove_coords(data))
-
-
-
-#13642
-#13972
-#4709
-# -15291
-# dir r  8 7
 
