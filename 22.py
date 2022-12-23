@@ -9,6 +9,7 @@ from logging import warning as W
 
 np.set_printoptions(threshold=np.inf, linewidth=1000)
 
+
 def read_input(filename):
     targets = {}
     f = open(filename)
@@ -17,10 +18,10 @@ def read_input(filename):
     for l in f:
         if l == "\n":
             break
-        length = max(len(l),length)
-        height +=1
+        length = max(len(l), length)
+        height += 1
 
-    board = np.zeros((height,length),dtype=int)
+    board = np.zeros((height, length), dtype=int)
     f = open(filename)
     instructions = ""
     f.close()
@@ -35,7 +36,7 @@ def read_input(filename):
         j = 0
         for c in l:
             if c == "#":
-                board[i][j] = -1
+                board[i][j] = 2
             elif c == ".":
                 board[i][j] = 1
             j += 1
@@ -43,42 +44,115 @@ def read_input(filename):
 
     return board, instructions
 
+
 def print_board(board):
     for i in range(len(board)):
         for j in range(len(board[i])):
             if board[i][j] == 0:
-                print(" ",end="")
+                print(" ", end="")
             elif board[i][j] == 1:
-                print(".",end="")
-            elif board[i][j] == -1:
-                print("#",end="")
+                print(".", end="")
+            elif board[i][j] == 2:
+                print("#", end="")
             else:
-                print(board[i][j],end="")
-                
+                print(board[i][j], end="")
+
         print()
 
 
-def move(inst,board,pos,dir):
+def move(inst, board, pos, direction):
     if inst == "L":
-        return (dir - 1)%4
+        return (direction - 1) % 4
     if inst == "R":
-        return (dir + 1)%4
-    if dir == 1:
-        move_right(inst,board)
+        return (direction + 1) % 4
+    if direction == 0:
+        D("right")        
+        move_right(inst, board,pos)
+    if direction == 1:
+        D("going down")
+        move_down(inst, board,pos)
+    if direction == 2:
+        D("left")
+        move_left(inst, board,pos)
+    if direction == 3:
+        D("up")
+        move_up(inst, board,pos)
+    return direction
 
-def move_right(inst,board,pos):
+def rightmost(board,row): # assume no u shaped maps
+    full = np.where(board[row,:] > 0)
+    return np.amax(full)
+
+def topmost(board,column): # assume no u shaped maps
+    full = np.where(board[:,column] > 0)
+    return np.amin(full)
+
+def bottommost(board,column): # assume no c shaped maps
+    full = np.where(board[:,column] > 0)
+    return np.amax(full)
+
+def leftmost(board,row): # assume no c shaped maps
+    full = np.where(board[row,:] > 0)
+    return np.amin(full)
+    
+def move_right(inst, board, pos):
     tiles = int(inst)
+    R = rightmost(board,pos[0])
+    L = leftmost(board,pos[0])    
+    D(f"{R=}")
+    D(f"{L=}")
+    
     while tiles:
-        if board[pos[0][[pos[1]+1] == -1 or (pos[1]+1 == len(board[pos[0]]) and board[pos[0]][0] == -1):
-            return pos
-        if board[pos[0]][pos[1]+1] >= 0:
-            pos[1] +=1
-        if pos[1]+1 == len(board[pos[0]]):
-            pos[1] = 0
+        if pos[1] + 1 <= R and board[pos[0]][pos[1] + 1] == 1:
+            pos[1] += 1
+            board[pos[0]][pos[1]] = 3
+        elif pos[1] == R and board[pos[0]][L] == 1:
+            pos[1] = L
+            board[pos[0]][pos[1]] = 3
+        tiles -= 1
+
+def move_down(inst, board, pos):
+    tiles = int(inst)
+    T = topmost(board,pos[1])
+    B = bottommost(board,pos[1])
+    while tiles:
+        if pos[0] + 1 <= B and board[pos[0]+1][pos[1]] == 1:
+            pos[0] += 1
+            board[pos[0]][pos[1]] = 3
+        elif pos[0] == B and board[T][pos[1]] == 1:
+            pos[0] = T
+            board[pos[0]][pos[1]] = 3
+        tiles -= 1
+
+def move_left(inst, board, pos):
+    tiles = int(inst)
+    R = rightmost(board,pos[0])
+    L = leftmost(board,pos[0])    
+    D(f"{R=}")
+    D(f"{L=}")
+    
+    while tiles:
+        if pos[1] - 1 <= L and board[pos[0]][pos[1] - 1] == 1:
+            pos[1] -= 1
+            board[pos[0]][pos[1]] = 3
+        elif pos[1] == L and board[pos[0]][R] == 1:
+            pos[1] = R
+            board[pos[0]][pos[1]] = 3
+        tiles -= 1
+
+def move_up(inst, board, pos):
+    tiles = int(inst)
+    T = topmost(board,pos[1])
+    B = bottommost(board,pos[1])
+    while tiles:
+        if pos[0] - 1 <= T and board[pos[0]-1][pos[1]] == 1:
+            pos[0] -= 1
+            board[pos[0]][pos[1]] = 3
+        elif pos[0] == T and board[B][pos[1]] == 1:
+            pos[0] = B
+            board[pos[0]][pos[1]] = 3
         tiles -= 1
         
-
-    
 
 filename = ""
 if len(sys.argv) > 1:
@@ -90,19 +164,23 @@ if len(sys.argv) > 1:
 else:
     print("usage: python 22.py <filename>")
 
-board,instructions_as_line = read_input(filename)
+board, instructions_as_line = read_input(filename)
 
-move = "(\d+|[LR])"
-instructions = re.findall(move,instructions_as_line)
+move_regexp = "(\d+|[LR])"
+instructions = re.findall(move_regexp, instructions_as_line)
 
 # You begin the path in the leftmost open tile of the top row of tiles.
-pos = [0,np.where(board[0] == 1)[0][0]]
-dir = 0 #0 right, 1 down, 2 left, 3 up
+pos = [0, np.where(board[0] == 1)[0][0]]
+direction = 0  #0 right, 1 down, 2 left, 3 up
 
-board[pos[0],pos[1]] = 2
+board[pos[0], pos[1]] = 3
 
-print_board(board)
-
+D(board.shape)
 
 for inst in instructions:
-    dir = move(inst,board,pos,dir)
+    direction = move(inst, board, pos, direction)
+    print_board(board)
+    print()
+
+
+    
