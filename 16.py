@@ -39,44 +39,54 @@ def set_value(G, label,value):
     G.nodes[label]['node_attr']['flow'] = value
 
 
-def max_flow(capacity, labels,G,from_node):
+def max_flow(capacity, labels,G,from_node,floyd):
     solutions = np.zeros((len(labels) + 1, capacity + 1))
 
+    print(floyd)
     # base case of i=0. IF we were not using np.zeros would have to be explicit:
     #for c in range(capacity+1):
-    #        solutions[0][c] = 0 
+    #        solutions[0][c] = 0
+    last_visited = "AA"
+    
     for i in range(1, len(labels)+1):
-        from_node = labels[i-1]            
+        cur_label = labels[i-1]
         for c in range(capacity+1):
-            s_is = eg.Dijkstra(G, from_node)  
-            s_i = s_is[labels[i-1]] + 1      
-            v_i = get_value(G,labels[i-1])
-            D(f"{from_node=}{s_is=}{s_i=}{v_i=}")
+            s_i = floyd["AA"][cur_label] + 1
+            v_i = get_value(G,cur_label)
+#            D(f"{s_i=}{v_i=}")
+
+            if s_i  > c:
+                solutions[i][c] = solutions[i-1][c]
+            else:
+#                print(f"{solutions[-1][c-1]=}")
+                solutions[i][c] = max(solutions[i-1][c],
+                                      solutions[i-1][c - s_i] + v_i*(capacity - s_i - c))
+            #last_visited = labels[i-1]
 #            D(f"from {from_node=} to {labels[i-2]=} : {s_i=}")
 
 #            D(f"{labels[i-2]=} {i-2=}")
 
 
 
-            # if nothing better, the flow of the previous capacity
-            max_flow = solutions[i-1][c]
-            if s_i +1 > c:
-                solutions[i][c] = solutions[i-1][c]
-                continue
+            # # if nothing better, the flow of the previous capacity
+            # max_flow = solutions[i-1][c]
+            # if s_i +1 > c:
+            #     solutions[i][c] = solutions[i-1][c]
+            #     continue
 
-            for candidate in s_is:
-                cost = s_is[candidate] + 1
-                if cost > c:
-                    continue
-                flow_cand = 0
-                v_cand = get_value(G,candidate)
-                if c - cost >= 0:
-                    flow_cand = solutions[i-1][c - cost] + v_i
-                if flow_cand > max_flow:
-                    max_flow = flow_cand
+            # for candidate in s_is:
+            #     cost = s_is[candidate] + 1
+            #     if cost > c:
+            #         continue
+            #     flow_cand = 0
+            #     v_cand = get_value(G,candidate)
+            #     if c - cost >= 0:
+            #         flow_cand = solutions[i-1][c - cost] + v_i
+            #     if flow_cand > max_flow:
+            #         max_flow = flow_cand
 
 
-            solutions[i][c] = max_flow
+#            solutions[i][c] = max_flow
 #                if b > a:
 #                    set_value(G,cur_label,0)
 #                    from_node = cur_label
@@ -117,7 +127,11 @@ G = read_input(filename)
 eg.readwrite.graphviz.write_dot(G, "graph.dot")
 
 items = [g for g in G.nodes]
-x,solutions = max_flow( 30,items,G,"AA")
+floyd = eg.Floyd(G)
+
+x,solutions = max_flow( 30,items,G,"AA",floyd)
+
+
 print(x)
 print(solutions)
 
