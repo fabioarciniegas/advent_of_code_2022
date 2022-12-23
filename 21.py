@@ -5,6 +5,8 @@ from logging import warning as W
 from logging import debug as D
 import logging
 
+np.set_printoptions(threshold=np.inf, linewidth=1000)
+
 
 class Monkey(object):
 
