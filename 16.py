@@ -46,27 +46,35 @@ def max_flow(capacity, labels,G,from_node):
     #for c in range(capacity+1):
     #        solutions[0][c] = 0 
     for i in range(1, len(labels)+1):
+        from_node = labels[i-1]            
         for c in range(capacity+1):
-            s_is = eg.Dijkstra(G, from_node)        
-            s_i = s_is[labels[i-1]] + 1
+            s_is = eg.Dijkstra(G, from_node)  
+            s_i = s_is[labels[i-1]] + 1      
             v_i = get_value(G,labels[i-1])
+            D(f"{from_node=}{s_is=}{s_i=}{v_i=}")
 #            D(f"from {from_node=} to {labels[i-2]=} : {s_i=}")
 
-            D(f"{labels[i-2]=} {i-2=}")
-#            D(f"{cur_label=}{s_is=}{s_i=}{v_i=}")
+#            D(f"{labels[i-2]=} {i-2=}")
+
+
 
             # if nothing better, the flow of the previous capacity
             max_flow = solutions[i-1][c]
+            if s_i +1 > c:
+                solutions[i][c] = solutions[i-1][c]
+                continue
 
             for candidate in s_is:
-                cost = s_is[candidate]
+                cost = s_is[candidate] + 1
                 if cost > c:
                     continue
+                flow_cand = 0
                 v_cand = get_value(G,candidate)
-                flow_cand = solutions[i-1][c - cost] + v_i
+                if c - cost >= 0:
+                    flow_cand = solutions[i-1][c - cost] + v_i
                 if flow_cand > max_flow:
                     max_flow = flow_cand
-                    from_node = candidate
+
 
             solutions[i][c] = max_flow
 #                if b > a:
