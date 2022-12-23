@@ -46,20 +46,29 @@ def max_flow(capacity, labels,G,from_node):
     #for c in range(capacity+1):
     #        solutions[0][c] = 0 
     for i in range(1, len(labels)+1):
-        cur_label = labels[i-1]
-        s_is = eg.Dijkstra(G, from_node)        
         for c in range(capacity+1):
-            s_i = s_is[labels[i-2]] + 1
-            D(f"from {from_node=} to {labels[i-2]=} : {s_i=}")
-            v_i = get_value(G,labels[i-2])
-            D(f"{cur_label=}{s_is=}{s_i=}{v_i=}")
-            if s_i > c: # no capacity, forced to inherit previous minute
-                solutions[i][c] = solutions[i-1][c]
-            else:
-                # pick max contribution previous + v_i  or just inherit
-                a = solutions[i][c] = solutions[i-1][c]
-                b = solutions[i-1][c - s_i] + v_i
-                solutions[i][c] = max(a,b)
+            s_is = eg.Dijkstra(G, from_node)        
+            s_i = s_is[labels[i-1]] + 1
+            v_i = get_value(G,labels[i-1])
+#            D(f"from {from_node=} to {labels[i-2]=} : {s_i=}")
+
+            D(f"{labels[i-2]=} {i-2=}")
+#            D(f"{cur_label=}{s_is=}{s_i=}{v_i=}")
+
+            # if nothing better, the flow of the previous capacity
+            max_flow = solutions[i-1][c]
+
+            for candidate in s_is:
+                cost = s_is[candidate]
+                if cost > c:
+                    continue
+                v_cand = get_value(G,candidate)
+                flow_cand = solutions[i-1][c - cost] + v_i
+                if flow_cand > max_flow:
+                    max_flow = flow_cand
+                    from_node = candidate
+
+            solutions[i][c] = max_flow
 #                if b > a:
 #                    set_value(G,cur_label,0)
 #                    from_node = cur_label
