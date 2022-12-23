@@ -152,7 +152,10 @@ def move_up(inst, board, pos):
             pos[0] = B
             board[pos[0]][pos[1]] = 3
         tiles -= 1
-        
+
+def password(board,pos,direction):
+    return (pos[0]*1000)+(pos[1]*4)+direction
+
 
 filename = ""
 if len(sys.argv) > 1:
@@ -182,5 +185,7 @@ for inst in instructions:
     print_board(board)
     print()
 
+print(f"{password(board,pos,dir)=}")
+    
 
     
