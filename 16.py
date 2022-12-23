@@ -51,11 +51,12 @@ def max_flow(capacity, labels,G,from_node):
         for c in range(capacity+1):
             s_i = s_is[labels[i-2]] + 1
             D(f"from {from_node=} to {labels[i-2]=} : {s_i=}")
-            v_i = get_value(G,cur_label)
+            v_i = get_value(G,labels[i-2])
             D(f"{cur_label=}{s_is=}{s_i=}{v_i=}")
-            if s_i > c:
+            if s_i > c: # no capacity, forced to inherit previous minute
                 solutions[i][c] = solutions[i-1][c]
             else:
+                # pick max contribution previous + v_i  or just inherit
                 a = solutions[i][c] = solutions[i-1][c]
                 b = solutions[i-1][c - s_i] + v_i
                 solutions[i][c] = max(a,b)
