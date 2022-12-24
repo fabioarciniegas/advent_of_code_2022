@@ -63,6 +63,14 @@ def print_board(board):
                 print(".", end="")
             elif board[i][j] == 2:
                 print("#", end="")
+            elif board[i][j] == -3:
+                print(">", end="")
+            elif board[i][j] == -4:
+                print("v", end="")
+            elif board[i][j] == -5:
+                print("<", end="")
+            elif board[i][j] == -6:
+                print("^", end="")
             else:
                 print(board[i][j], end="")
         print()
@@ -80,6 +88,7 @@ def face(pos):
 def rightmost(pos):
     return tls[face(pos)][1] + 49
 
+
 def topmost(pos):
     return tls[face(pos)][0]
 
@@ -90,6 +99,11 @@ def bottommost(pos):
 
 def leftmost(pos):
     return tls[face(pos)][1]
+
+
+def trace(pos, d):
+    dir_codes = {0: -3, 1: -4, 2: -5, 3: -6}
+    board_viz[pos[0]][pos[1]] = dir_codes[d]
 
 
 def targetright(pos):
@@ -104,10 +118,10 @@ def targetright(pos):
     D(f"{pos=} {f=}, {nf=} {nd=}")
 
     if nd == 0:
-        target[0] = pos[0]
-        target[1] = tls[nf][1]
+        target[0] = topmost(tls[nf]) + (pos[0]- topmost(tls[f]))
+        target[1] = leftmost(tls[nf])
     if nd == 2:
-        target[0] = topmost(tls[nf]) + (bottommost(tls[f]) - pos[0])
+        target[0] = topmost(tls[nf]) + (pos[0] - topmost(tls[f]))
         target[1] = rightmost(tls[nf])
     if nd == 3:
         target[0] = bottommost(tls[nf])
@@ -127,10 +141,10 @@ def targetleft(pos):
     D(f"{pos=} {f=}, {nf=} {nd=}")
 
     if nd == 0:
-        target[0] = bottommost(tls[nf]) - (pos[0] - topmost(tls[f]))
+        target[0] = topmost(tls[nf]) + (pos[0]- topmost(tls[f]))
         target[1] = leftmost(tls[nf])
     if nd == 2:
-        target[0] = pos[0]
+        target[0] = topmost(tls[nf]) + (pos[0]- topmost(tls[f]))
         target[1] = rightmost(tls[nf])
     if nd == 1:
         target[0] = topmost(tls[nf])
@@ -151,7 +165,7 @@ def targetdown(pos):
 
     if nd == 1:
         target[0] = topmost(tls[nf])
-        target[1] = pos[1]
+        target[1] = leftmost(tls[nf]) + (pos[1] - leftmost(tls[f]))
     if nd == 2:
         target[0] = topmost(tls[nf]) + (pos[1] - leftmost(tls[f]))
         target[1] = rightmost(tls[nf])
@@ -198,10 +212,12 @@ def move_right(inst, board, pos):
     while tiles:
         if pos[1] < R and board[pos[0]][pos[1] + 1] == 1:
             pos[1] += 1
+            trace(pos,0)
         elif pos[1] == R:
             target, nd = targetright(pos)
             if board[target[0]][target[1]] == 1:
                 pos[0], pos[1] = target[0], target[1]
+                trace(pos,nd)
             return tiles - 1, nd
         tiles -= 1
     return tiles, 0
@@ -213,13 +229,17 @@ def move_down(inst, board, pos):
     while tiles:
         if pos[0] < B and board[pos[0] + 1][pos[1]] == 1:
             pos[0] += 1
+            trace(pos,1)
         elif pos[0] == B:
+            D(f"ON the bottommost:{pos=}")
             target, nd = targetdown(pos)
+            D(f"so {target=} {nd=} {pos=}")            
             if board[target[0]][target[1]] == 1:
                 pos[0], pos[1] = target[0], target[1]
+                trace(pos,nd)
             return tiles - 1, nd
         tiles -= 1
-    return tiles, 0
+    return tiles, 1
 
 
 def move_left(inst, board, pos):
@@ -228,13 +248,15 @@ def move_left(inst, board, pos):
     while tiles:
         if pos[1] > L and board[pos[0]][pos[1] - 1] == 1:
             pos[1] -= 1
+            trace(pos,2)
         elif pos[1] == L:
             target, nd = targetleft(pos)
             if board[target[0]][target[1]] == 1:
                 pos[0], pos[1] = target[0], target[1]
+                trace(pos,nd)
             return tiles - 1, nd
         tiles -= 1
-    return tiles, 0
+    return tiles, 2
 
 
 def move_up(inst, board, pos):
@@ -243,33 +265,37 @@ def move_up(inst, board, pos):
     while tiles:
         if pos[0] > T and board[pos[0] - 1][pos[1]] == 1:
             pos[0] -= 1
+            trace(pos,3)
         elif pos[0] == T:
             target, nd = targetup(pos)
             if board[target[0]][target[1]] == 1:
                 pos[0], pos[1] = target[0], target[1]
+                trace(pos,nd)
             return tiles - 1, nd
         tiles -= 1
-    return tiles, 0
+    return tiles, 3
 
 
 def move(inst, board, pos, direction):
+    #0 right, 1 down, 2 left, 3 up
     if inst == "L":
-        return (direction - 1) % 4
+        nd = { 0:3 , 1:0, 2:1, 3:2}
+        return nd[direction]
     elif inst == "R":
-        return (direction + 1) % 4
-    
+        nd = { 0:1 , 1:2, 2:3, 3:0}
+        return nd[direction]
+
     tiles = int(inst)
     while tiles:
         if direction == 0:
-            tiles,direction = move_right(tiles, board, pos)
+            tiles, direction = move_right(tiles, board, pos)
         if direction == 1:
-            tiles,direction = move_down(tiles, board, pos)
+            tiles, direction = move_down(tiles, board, pos)
         if direction == 2:
-            tiles,direction = move_left(tiles, board, pos)
+            tiles, direction = move_left(tiles, board, pos)
         if direction == 3:
-            tiles,direction = move_up(tiles, board, pos)
+            tiles, direction = move_up(tiles, board, pos)
     return direction
-
 
 
 def password(board, pos, direction):
@@ -288,6 +314,8 @@ else:
 
 board, instructions_as_line = read_input(filename)
 
+board_viz,_ = read_input(filename)#('U1',1))
+
 move_regexp = "(\d+|[LR])"
 instructions = re.findall(move_regexp, instructions_as_line)
 
@@ -299,6 +327,16 @@ for inst in instructions:
     D(f"{pos=}{direction=}")
     direction = move(inst, board, pos, direction)
 
-print(f"{password(board,pos,direction)=}")
+print_board(board_viz)
+print(f"{pos=} {direction=} {password(board,pos,direction)=}")
+
 
 exit(0)
+
+#149400 too high
+#150062
+#89316 too low
+#71231
+
+
+# 10R200L10R200L10R10L200R10L5L200
