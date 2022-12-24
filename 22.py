@@ -103,25 +103,31 @@ def move_right(inst, board, pos):
     D(f"{L=}")
     
     while tiles:
-        if pos[1] + 1 <= R and board[pos[0]][pos[1] + 1] == 1:
+        if pos[1] < R and board[pos[0]][pos[1] + 1] == 1:
             pos[1] += 1
-            board[pos[0]][pos[1]] = 3
+#            board[pos[0]][pos[1]] = 3
         elif pos[1] == R and board[pos[0]][L] == 1:
             pos[1] = L
-            board[pos[0]][pos[1]] = 3
+#            board[pos[0]][pos[1]] = 3
         tiles -= 1
 
 def move_down(inst, board, pos):
     tiles = int(inst)
     T = topmost(board,pos[1])
     B = bottommost(board,pos[1])
+    D(f"{T=}")
+    D(f"{B=}")
     while tiles:
-        if pos[0] + 1 <= B and board[pos[0]+1][pos[1]] == 1:
+        if pos[0] < B and board[pos[0]+1][pos[1]] == 1:
+            D(f"{pos=}")
+            D(f"{tiles=}")
             pos[0] += 1
-            board[pos[0]][pos[1]] = 3
+#            board[pos[0]][pos[1]] = 3
         elif pos[0] == B and board[T][pos[1]] == 1:
+            D(f"{pos=}")
+            D(f"{tiles=}")
             pos[0] = T
-            board[pos[0]][pos[1]] = 3
+#            board[pos[0]][pos[1]] = 3
         tiles -= 1
 
 def move_left(inst, board, pos):
@@ -132,12 +138,12 @@ def move_left(inst, board, pos):
     D(f"{L=}")
     
     while tiles:
-        if pos[1] - 1 <= L and board[pos[0]][pos[1] - 1] == 1:
+        if pos[1] > L and board[pos[0]][pos[1] - 1] == 1:
             pos[1] -= 1
-            board[pos[0]][pos[1]] = 3
+#            board[pos[0]][pos[1]] = 3
         elif pos[1] == L and board[pos[0]][R] == 1:
             pos[1] = R
-            board[pos[0]][pos[1]] = 3
+#            board[pos[0]][pos[1]] = 3
         tiles -= 1
 
 def move_up(inst, board, pos):
@@ -145,16 +151,16 @@ def move_up(inst, board, pos):
     T = topmost(board,pos[1])
     B = bottommost(board,pos[1])
     while tiles:
-        if pos[0] - 1 <= T and board[pos[0]-1][pos[1]] == 1:
+        if pos[0] > T and board[pos[0]-1][pos[1]] == 1:
             pos[0] -= 1
-            board[pos[0]][pos[1]] = 3
+#            board[pos[0]][pos[1]] = 3
         elif pos[0] == T and board[B][pos[1]] == 1:
             pos[0] = B
-            board[pos[0]][pos[1]] = 3
+#            board[pos[0]][pos[1]] = 3
         tiles -= 1
 
 def password(board,pos,direction):
-    return (pos[0]*1000)+(pos[1]*4)+direction
+    return ((pos[0]+1)*1000)+((pos[1]+1)*4)+direction
 
 
 filename = ""
@@ -176,16 +182,18 @@ instructions = re.findall(move_regexp, instructions_as_line)
 pos = [0, np.where(board[0] == 1)[0][0]]
 direction = 0  #0 right, 1 down, 2 left, 3 up
 
-board[pos[0], pos[1]] = 3
+#board[pos[0], pos[1]] = 3
 
 D(board.shape)
 
 for inst in instructions:
+    D(f"{pos=}{direction=}")
     direction = move(inst, board, pos, direction)
-    print_board(board)
-    print()
+    #print_board(board)
+    #print()
 
-print(f"{password(board,pos,dir)=}")
+print_board(board)
+print(f"{password(board,pos,direction)=}")
     
 
     
