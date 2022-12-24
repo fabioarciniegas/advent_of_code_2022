@@ -146,7 +146,7 @@ def targetleft(pos):
     D(f"{pos=} {f=}, {nf=} {nd=}")
     
     if nd == 0:
-        target[0] = topmost(tls[nf])+(pos[0]-topmost(tls[f]))
+        target[0] = bottommost(tls[nf])-(pos[0]-topmost(tls[f]))
         target[1] = leftmost(tls[nf])
     if nd == 2:
         target[0] = pos[0]
@@ -196,11 +196,11 @@ def targetup(pos):
     D(f"{f=}, {nf=} {nd=}")
     
     if nd == 0:
-        target[0] = topmost(tls[nf])+(post[1]-leftmost(tls[f]))
+        target[0] = topmost(tls[nf])+(pos[1]-leftmost(tls[f]))
         target[1] = leftmost(tls[nf])
     if nd == 3:
         target[0] = bottommost(tls[nf])
-        target[1] = leftmost(tls[nf])+(pos[0]-leftmost(tls[f]))
+        target[1] = leftmost(tls[nf])+(pos[1]-leftmost(tls[f]))
     return target,nd
 
 
@@ -311,6 +311,7 @@ D(targetright((99,99)))
 D(targetright((160,49)))
 
 
+D("LEFT")
 # test left movement
 D(targetleft((0,50)))
 
@@ -321,6 +322,11 @@ D(targetleft((0,50)))
 #     D(f"{pos=},{more=},{d=}")
 # D(f"{pos=}")    
 
+ops = targetleft,targetdown,targetright,targetup
+
+for corner in tls.values():
+    for op in ops:
+        print(f"{corner} using {op.__name__} : {op(corner)}")
 
 
 
