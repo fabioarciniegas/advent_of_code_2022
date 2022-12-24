@@ -109,7 +109,6 @@ def leftmost(pos):
 
 
 def targetright(pos):
-    # only good for edges
     target = [None,None]
     next_face = { "A" : "B", "B" : "D", "C" : "B",
                   "D" : "B", "E" : "D", "F" : "D" }
@@ -119,13 +118,13 @@ def targetright(pos):
     f = face(pos)
     nf = next_face[f]
     nd = next_dir[f]
-#    D(f"{f=}, {nf=} {nd=}")
+    D(f"{pos=} {f=}, {nf=} {nd=}")
     
     if nd == 0:
         target[0] = pos[0]
         target[1] = tls[nf][1]
     if nd == 2:
-        target[0] = topmost(tls[nf])+(topmost(tls[f])+49 - pos[0])
+        target[0] = topmost(tls[nf])+(bottommost(tls[f]) - pos[0])
         target[1] = rightmost(tls[nf])
     if nd == 3:
         target[0] = bottommost(tls[nf])
@@ -144,11 +143,11 @@ def targetleft(pos):
     f = face(pos)
     nf = next_face[f]
     nd = next_dir[f]
-    D(f"{f=}, {nf=} {nd=}")
+    D(f"{pos=} {f=}, {nf=} {nd=}")
     
     if nd == 0:
-        target[0] = tls[nf][0]
-        target[1] = bottommost(tls[nf])-(pos[0]-topmost(tls[f]))
+        target[0] = topmost(tls[nf])+(pos[0]-topmost(tls[f]))
+        target[1] = leftmost(tls[nf])
     if nd == 2:
         target[0] = pos[0]
         target[1] = rightmost(tls[nf])
@@ -157,6 +156,52 @@ def targetleft(pos):
         target[1] = leftmost(tls[nf]) + (pos[0]-topmost(tls[f]))
     return target,nd
 
+
+def targetdown(pos):
+    # only good for edges
+    target = [None,None]
+    next_face = { "A" : "C", "B" : "C", "C" : "D",
+                  "D" : "F", "E" : "F", "F" : "B" }
+    #0 right, 1 down, 2 left, 3 up
+    next_dir = { "A" : 1, "B" : 2, "C" : 1,"D" : 2, "E" : 1, "F" : 1 }
+
+    f = face(pos)
+    nf = next_face[f]
+    nd = next_dir[f]
+    D(f"{pos=} {f=}, {nf=} {nd=}")
+    
+    if nd == 1:
+        target[0] = topmost(tls[nf])
+        target[1] = pos[1]
+    if nd == 2:
+        target[0] = topmost(tls[nf])+(pos[1]-leftmost(tls[f]))
+        target[1] = rightmost(tls[nf])
+    return target,nd
+
+
+
+
+
+def targetup(pos):
+    # only good for edges
+    target = [None,None]
+    next_face = { "A" : "F", "B" : "F", "C" : "A",
+                  "D" : "C", "E" : "C", "F" : "E" }
+    #0 right, 1 down, 2 left, 3 up
+    next_dir = { "A" : 0, "B" : 3, "C" : 3,"D" : 3, "E" : 0, "F" : 3 }
+
+    f = face(pos)
+    nf = next_face[f]
+    nd = next_dir[f]
+    D(f"{f=}, {nf=} {nd=}")
+    
+    if nd == 0:
+        target[0] = topmost(tls[nf])+(post[1]-leftmost(tls[f]))
+        target[1] = leftmost(tls[nf])
+    if nd == 3:
+        target[0] = bottommost(tls[nf])
+        target[1] = leftmost(tls[nf])+(pos[0]-leftmost(tls[f]))
+    return target,nd
 
 
            
@@ -260,7 +305,6 @@ direction = 0  #0 right, 1 down, 2 left, 3 up
 
 # test right movement
 D(targetright((49,99)))
-D(targetright((10,99))) # only good on edges
 D(targetright((49,149)))
 D(targetright((50,99)))
 D(targetright((99,99)))
