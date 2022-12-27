@@ -1,4 +1,3 @@
-# https://www.sciencedirect.com/science/article/abs/pii/S0377221710002973 ?
 import math
 import numpy as np
 import easygraph as eg
@@ -10,7 +9,6 @@ import sys
 import logging
 from logging import debug as D
 from logging import warning as W
-from functools import partial
 
 np.set_printoptions(threshold=np.inf, linewidth=1000)
 
@@ -42,30 +40,6 @@ def get_value(G, label):
 V = get_value
 
 
-def combinations(r, n):
-    """ all bit sets of size N with r bits turned on.
-    combinations(3,4) → 0111, 1011, 1101, 1110
-    """
-    subsets = []
-    combos(0, 0, r, n, subsets)
-    return subsets
-
-
-def combos(s, at, r, n, subsets):
-    """ backtrack algorithm to generate the power sets"""
-    if r == 0:
-        subsets.append(s)
-    else:
-        for i in range(at, n):
-            s = s | (1 << i)  # try setting the next bit
-            combos(s, i + 1, r - 1, n, subsets)
-            # you arrived at all those that contained that bit turned on
-            s = s & ~(1 << i)  # now take it off and continue
-
-
-def notIn(s, subset):
-    return ((1 << s) & subset) == 0
-
 def powers(n):
     return [1 << i for i in range(n)]
 
@@ -82,56 +56,20 @@ def powers(n):
 # TSP video and an explicit array. problem was 2^N long array too big
 # for memory, whence reusing the trick of bit fields but only as keys into
 # a sparse representation (a dict)
+#
+# Credit to @juanlopes for the most elegant version of this idea which i saw on
+# the reddit.
+# I did not complete this code before learning from his solution,  I did however figured out the
+# solution with an explicit numpy arrray (see previous  commits)
+# before I leveraged his idea for a sparse matrix and a nicer recursion than my iterative dynamic
+# programming with a huge np matrix .
 def solve(solutions,node, budget, state, flow, values):
     solutions[state] = max(flow,solutions.get(state,0))
     for i,new_flow in enumerate(values):
         new_budget = budget - distances[node][i] - 1
         if new_flow == 0 or i == node or (1 << i) & state or new_budget <= 0: # visited or can't visit
             continue
-        solve(solutions,i,new_budget,state | (1 <<i),flow + new_budget*new_flow,values)        
-
-
-def solveIteratively(solutions, s, n, names, distances,budget,values):
-    # broken, I use only one row on solutions
-    origin = 0
-    queue = []
-    for i in range(2,budget+1):
-        for j,o in enumerate(powers(n)):
-            queue.append((o,origin,i))
-            while queue:
-                e,l,b = queue.pop()
-                origin_index = 1 << l
-                if e == 0b1111111111:
-#                    D(f"not going from {bin(e)=}(last visited through origin {l=}) to {bin(target)=}({target}) by adding {origin_index=} ({origin})")
-                    D(solutions)
-                    continue
-                for k,p in enumerate(powers(n)):
-                    new_budget = b - distances[k][l] - 1
-                    if j==k or e & p or new_budget < 0: continue
-                    queue.append(((e|p),k,new_budget))
-
-                
-                flow = max(solutions[b][e],0)
-                max_p = 0
-                for k,p in enumerate(powers(n)):
-                    new_budget = b - distances[k][l] - 1
-                    if j==k or e & p or new_budget < 0:
-                        continue
-                    new_flow = solutions[b-new_budget][e] + values[k] * new_budget
-                    if flow < new_flow:
-                        flow = new_flow
-                        max_p = p
-                solutions[b][e|max_p] = flow
-                    
-
-def initialize_solutions(G, solutions, n, budget):
-    return
-    # for j,p in enumerate(powers(n)):
-    #     flow = values[j]*i 
-    #     solutions[p] = flow            
-    
-
-
+        solve(solutions,i,new_budget,state | (1 <<i),flow + new_budget*new_flow,values)
 
 filename = ""
 if len(sys.argv) > 1:
@@ -172,3 +110,16 @@ for i,a in enumerate(floyd):
 solve(solutions, s, budget, 0, 0, values)
 print(solutions)
 print(max(solutions.values()))
+
+solutions_2 = {}
+solve(solutions_2, s, 26, 0, 0, values)
+
+different = []
+
+for i,f1 in solutions_2.items():
+    for j,f2 in solutions_2.items():
+        if not i & j:
+            different.append(f1+f2)
+
+            
+print(max(different))
