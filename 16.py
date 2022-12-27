@@ -105,7 +105,7 @@ for i,a in enumerate(floyd):
         distances[i][j] = floyd[a][b]
 
 solve(solutions, s, budget, 0, 0, values)
-print(solutions)
+#print(solutions)
 print(max(solutions.values()))
 
 solutions_2 = {}
