@@ -69,15 +69,26 @@ def notIn(s, subset):
 def powers(n):
     return [1 << i for i in range(n)]
 
-
+# The trick of using an integer to capture the path visited is taken from
+# the traveling salesman with dynamic programming:
+# https://www.youtube.com/watch?v=cY4HiiFHO1o
+#
+# a state s is a bit field in which the least significant ith item is on
+# if the item i is considered in the state.
+#
+# x = 2, y = 3 , bit_field_with_both = (1 << 2) | (1 <<3) = 0b110
+# 
+# In a previous commit I solved this basically using the approach in the
+# TSP video and an explicit array. problem was 2^N long array too big
+# for memory, whence reusing the trick of bit fields but only as keys into
+# a sparse representation (a dict)
 def solve(solutions,node, budget, state, flow, values):
-    solutions[0][state] = max(flow,solutions[0][state])
-    for i,candidate in enumerate(values):
+    solutions[state] = max(flow,solutions.get(state,0))
+    for i,new_flow in enumerate(values):
         new_budget = budget - distances[node][i] - 1
-        if (1 << i) & state or new_budget < 0: # visited or can't visit
+        if new_flow == 0 or i == node or (1 << i) & state or new_budget <= 0: # visited or can't visit
             continue
-        solve(solutions,i,new_budget,state | (1 <<i),flow + new_budget*values[i],values)
-        
+        solve(solutions,i,new_budget,state | (1 <<i),flow + new_budget*new_flow,values)        
 
 
 def solveIteratively(solutions, s, n, names, distances,budget,values):
@@ -143,8 +154,7 @@ G = read_input(filename)
 
 names = [g for g in G.nodes]
 budget = 30
-solutions = np.full((1, 2**len(names)+1), -1, dtype=int)
-D(solutions.shape)
+solutions = {} # sparse as opposed to np.full((1, 2**len(names)+1), -1, dtype=int)
 
 floyd = eg.Floyd(G)
 
@@ -161,4 +171,4 @@ for i,a in enumerate(floyd):
 
 solve(solutions, s, budget, 0, 0, values)
 print(solutions)
-print(np.amax(solutions))
+print(max(solutions.values()))
