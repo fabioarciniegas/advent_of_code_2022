@@ -70,45 +70,56 @@ def powers(n):
     return [1 << i for i in range(n)]
 
 
-def solve(solutions, s, n, names, distances,budget):
-#    D(n)
-    for i in range(2,budget):
-        for j in powers(n):
-            flow = solutions[i-1][j]
-            D(j)
-            D("previous")
-            for previous in powers(n):
-                if previous > j:
-                    continue
-                previous = previous & ~j
-                D(previous)
-                
-            
+def solve(solutions,node, budget, state, flow, values):
+    solutions[0][state] = max(flow,solutions[0][state])
+    for i,candidate in enumerate(values):
+        new_budget = budget - distances[node][i] - 1
+        if (1 << i) & state or new_budget < 0: # visited or can't visit
+            continue
+        solve(solutions,i,new_budget,state | (1 <<i),flow + new_budget*values[i],values)
         
 
-def solve_1(solutions, s, n, names,distances):
-    for r in range(2, n + 1):
-        for subset in combinations(r, n):
-            if notIn(s, subset):
-                continue
-            for next_s in range(n):
-                if next_s == s or notIn(next_s, subset):
+
+def solveIteratively(solutions, s, n, names, distances,budget,values):
+    # broken, I use only one row on solutions
+    origin = 0
+    queue = []
+    for i in range(2,budget+1):
+        for j,o in enumerate(powers(n)):
+            queue.append((o,origin,i))
+            while queue:
+                e,l,b = queue.pop()
+                origin_index = 1 << l
+                if e == 0b1111111111:
+#                    D(f"not going from {bin(e)=}(last visited through origin {l=}) to {bin(target)=}({target}) by adding {origin_index=} ({origin})")
+                    D(solutions)
                     continue
-                subset_wo_next = subset ^ (1 << next_s)
-                maxDist = -math.inf
-                for e in range(n):
-                    if e == s or e == next_s or notIn(e, subset):
+                for k,p in enumerate(powers(n)):
+                    new_budget = b - distances[k][l] - 1
+                    if j==k or e & p or new_budget < 0: continue
+                    queue.append(((e|p),k,new_budget))
+
+                
+                flow = max(solutions[b][e],0)
+                max_p = 0
+                for k,p in enumerate(powers(n)):
+                    new_budget = b - distances[k][l] - 1
+                    if j==k or e & p or new_budget < 0:
                         continue
-                    newDist = solutions[e][subset_wo_next] + m[e][next_s]
-                    maxDist = max(maxDist, newDist)
+                    new_flow = solutions[b-new_budget][e] + values[k] * new_budget
+                    if flow < new_flow:
+                        flow = new_flow
+                        max_p = p
+                solutions[b][e|max_p] = flow
+                    
 
-                D(f" {next_s=}  {subset=} with {newDist=}")
-                solutions[next_s][subset] = maxDist
+def initialize_solutions(G, solutions, n, budget):
+    return
+    # for j,p in enumerate(powers(n)):
+    #     flow = values[j]*i 
+    #     solutions[p] = flow            
+    
 
-
-def initialize_solutions(G, solutions, start, n):
-    for i,j in enumerate(powers(n)):
-        solutions[1][j] = get_value(G, names[i])
 
 
 filename = ""
@@ -130,13 +141,9 @@ G = read_input(filename)
 
 # eg.readwrite.graphviz.write_dot(G, "graph.dot") # TODO: re-enable as a cli option
 
-# node_names_ordered = sorted(
-#     [g for g in G.nodes],
-#     key=lambda node: int(G.nodes[node]['node_attr']['flow']))
-
 names = [g for g in G.nodes]
-budget = 5
-solutions = np.zeros((budget, 2**len(names)+1), dtype=int)
+budget = 30
+solutions = np.full((1, 2**len(names)+1), -1, dtype=int)
 D(solutions.shape)
 
 floyd = eg.Floyd(G)
@@ -144,34 +151,14 @@ floyd = eg.Floyd(G)
 s = names.index("AA")
 N = len(names)
 
-initialize_solutions(G, solutions, s, N)
+values = [get_value(G, names[i]) for i in range(N)]
+initialize_solutions(G, solutions, N, budget)
 
 distances = np.full((N,N),math.inf,dtype=int)
-#D(type(floyd))
-#D(floyd.keys())
 for i,a in enumerate(floyd):
     for j,b in enumerate(floyd[a]):
         distances[i][j] = floyd[a][b]
-#D(distances)
 
-solve(solutions, s, N, names, distances, budget)
-D(solutions)
-exit(2)
-
-
-minCost = findMinCost(m, solutions, s, N, node_names_ordered)
-
-n = len(node_names_ordered)
-
-D(solutions)
-D(node_names_ordered)
-D(m)
-D(solutions[6][1 << 6 | 1 << 0])
-
-end_state = (1 << n) - 1
-D(f"{solutions[1][end_state]=}")
-D(f"{reconstruct(m,solutions,s,n)=}")
-
-#solve(floyd,solutions,s,n,node_names_ordered)
-
-#print(solutions)
+solve(solutions, s, budget, 0, 0, values)
+print(solutions)
+print(np.amax(solutions))
