@@ -42,7 +42,6 @@ def get_value(G, label):
 V = get_value
 
 
-
 def combinations(r, n):
     """ all bit sets of size N with r bits turned on.
     combinations(3,4) → 0111, 1011, 1101, 1110
@@ -67,9 +66,28 @@ def combos(s, at, r, n, subsets):
 def notIn(s, subset):
     return ((1 << s) & subset) == 0
 
+def powers(n):
+    return [1 << i for i in range(n)]
 
-def solve(m, solutions, s, n, names):
-    for r in range(3, n + 1):
+
+def solve(solutions, s, n, names, distances,budget):
+#    D(n)
+    for i in range(2,budget):
+        for j in powers(n):
+            flow = solutions[i-1][j]
+            D(j)
+            D("previous")
+            for previous in powers(n):
+                if previous > j:
+                    continue
+                previous = previous & ~j
+                D(previous)
+                
+            
+        
+
+def solve_1(solutions, s, n, names,distances):
+    for r in range(2, n + 1):
         for subset in combinations(r, n):
             if notIn(s, subset):
                 continue
@@ -88,47 +106,9 @@ def solve(m, solutions, s, n, names):
                 solutions[next_s][subset] = maxDist
 
 
-def reconstruct(m, solutions, s, n):
-    lastIndex = s
-    end_state = (1 << n) - 1
-    state = end_state
-    tour = []
-    for i in range(1, n):
-        bestIndex = -1
-        bestDist = -math.inf
-        for j in range(n):
-            if j == s or notIn(j, state):
-                continue
-            newDist = solutions[j][state] + m[j][lastIndex]
-            if newDist > bestDist:
-                newDist = bestDist
-                bestIndex = j
-        tour.append(bestIndex)
-        state = state ^ (1 << bestIndex)
-        lastIndex = bestIndex
-    tour.append(s)
-    tour.reverse()
-    return tour
-
-
-def initialize_table(m, solution, start, n):
-    for i in range(n):
-        if i == start:
-            continue
-
-
-#        D(f"Distance from {start=}({s=}) to {name=}({i=}): {floyd[start][name]}")
-        solutions[i][1 << start | 1 << i] = m[start][i]
-
-
-def pseudo_adj(G, ordered_names):
-    side = len(G.nodes)
-    A = np.full((side, side), 0, dtype=int)
-    for i, e in enumerate(ordered_names):
-        for s in G.neighbors(node=e):
-            j = ordered_names.index(s)
-            A[i][j] = G.nodes[s]['node_attr']['flow']
-    return A
+def initialize_solutions(G, solutions, start, n):
+    for i,j in enumerate(powers(n)):
+        solutions[1][j] = get_value(G, names[i])
 
 
 filename = ""
@@ -150,20 +130,35 @@ G = read_input(filename)
 
 # eg.readwrite.graphviz.write_dot(G, "graph.dot") # TODO: re-enable as a cli option
 
-node_names_ordered = sorted(
-    [g for g in G.nodes],
-    key=lambda node: int(G.nodes[node]['node_attr']['flow']))
-solutions = np.full((len(node_names_ordered), 2**len(node_names_ordered)),
-                    0,
-                    dtype=int)
+# node_names_ordered = sorted(
+#     [g for g in G.nodes],
+#     key=lambda node: int(G.nodes[node]['node_attr']['flow']))
+
+names = [g for g in G.nodes]
+budget = 5
+solutions = np.zeros((budget, 2**len(names)+1), dtype=int)
+D(solutions.shape)
 
 floyd = eg.Floyd(G)
-m = pseudo_adj(G, node_names_ordered)
-s = node_names_ordered.index("AA")
-N = len(node_names_ordered)
 
-initialize_table(m, solutions, s, N)
-solve(m, solutions, s, N, node_names_ordered)
+s = names.index("AA")
+N = len(names)
+
+initialize_solutions(G, solutions, s, N)
+
+distances = np.full((N,N),math.inf,dtype=int)
+#D(type(floyd))
+#D(floyd.keys())
+for i,a in enumerate(floyd):
+    for j,b in enumerate(floyd[a]):
+        distances[i][j] = floyd[a][b]
+#D(distances)
+
+solve(solutions, s, N, names, distances, budget)
+D(solutions)
+exit(2)
+
+
 minCost = findMinCost(m, solutions, s, N, node_names_ordered)
 
 n = len(node_names_ordered)
