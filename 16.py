@@ -83,8 +83,6 @@ if len(sys.argv) > 1:
 else:
     print("usage: python 16.py <filename>")
 
-D(f"combinations of 5, 6:{combinations(5,6)=} a.k.a. {[bin(x) for x in combinations(5,6)]}"
-  )
 
 G = read_input(filename)
 
@@ -100,7 +98,6 @@ s = names.index("AA")
 N = len(names)
 
 values = [get_value(G, names[i]) for i in range(N)]
-initialize_solutions(G, solutions, N, budget)
 
 distances = np.full((N,N),math.inf,dtype=int)
 for i,a in enumerate(floyd):
