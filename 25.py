@@ -21,6 +21,26 @@ def snafu2dec(s):
         total += d[i] * 5**p
     return total
 
+def dec2snafu(n):
+    d = {2: "2", 1: "1", 0: "0", 3: "1=", 4: "1-"}
+    b5 = []
+    while n > 0:
+        b5.insert(0,n%5)
+        n = n // 5
+    snafu = []
+    carry = 0
+    D(b5)
+    for i,e in enumerate(b5[::-1]):
+        e += carry
+        carry = e // 5
+        g = e%5
+        if len(d[g]) > 1:
+            snafu.insert(0,d[g][-1])
+            carry += 1
+        else:
+            snafu.insert(0,d[g])
+    return "".join([str(i) for i in snafu])
+
 
 filename = ""
 if len(sys.argv) > 1:
@@ -36,6 +56,7 @@ else:
 
 snafu = read_input(filename)
 
-print(sum([snafu2dec(i) for i in snafu]))
+code = sum([snafu2dec(i) for i in snafu])
+print(code)
+print(dec2snafu(code))
 
-D(snafu2dec("1=-0-2"))
