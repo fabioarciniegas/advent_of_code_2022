@@ -32,15 +32,18 @@ class Blueprint(object):
         self.geobot_cost = geodebot
 
     def time_to_n_ores(self, n, s):
-        return max(0, math.ceil((n - s.ores) / s.orebots))
+        if s.ores >= n: return 0
+        return math.ceil((n - s.ores) / s.orebots)
 
     def time_to_n_clays(self, n, s):
         if not s.claybots: return -1
-        return max(0, math.ceil((n - s.clays) / s.claybots))
+        if s.clays >= n: return 0
+        return math.ceil((n - s.clays) / s.claybots)
 
     def time_to_n_obsis(self, n, s):
         if not s.obsbots: return -1
-        return max(0, (n - math.ceil(s.obsis) / s.obsbots))
+        if s.obsis >= n: return 0
+        return math.ceil((n - s.obsis) / s.obsbots)
 
     def orebot_in(
             self,
@@ -84,7 +87,7 @@ class Blueprint(object):
             obsis=s.obsis + s.obsbots * self.orebot_in(s),
             geodes=s.geodes + s.geobots * self.orebot_in(s),
             orebots=s.orebots + 1)
-        
+    
         build_claybot_state = replace(
             s,
             ores=s.ores + s.orebots * self.claybot_in(s) - self.claybot_cost,
@@ -112,18 +115,17 @@ class Blueprint(object):
         candidates = [max_g]
 
         if self.geobot_in(s) != -1 and mins - self.geobot_in(s) > 0 \
-           and build_geobot_state.ores >= 0 and build_geobot_state.obsis >= 0:
+           and build_geobot_state.ores >= 0 and build_geobot_state.obsis >= 0 :
             D(f"+Geobot with {mins=} to go ends on  {mins-self.geobot_in(s)} to go , {build_geobot_state}"
               )
             indent +=1
             candidates.append(
                 self.max_geodes(mins - self.geobot_in(s), build_geobot_state))
-            indent -=1            
+            indent -=1
 
         if self.obsbot_in(s) != -1 and mins - self.obsbot_in(s) > 0 \
-           and mins > self.geobot_in(s) \
-           and build_obsbot_state.ores >= 0 \
-           and build_obsbot_state.clays >= 0 and s.obsbots < self.geobot_cost[1]: 
+           and build_obsbot_state.clays >= 0 and build_obsbot_state.ores >= 0 \
+           and s.obsbots <= self.geobot_cost[1]+5:
             D(f"+Obsbot w {mins=} to go ends on minute  {mins-self.obsbot_in(s)} to go {build_obsbot_state}"
               )
             indent +=1
@@ -131,11 +133,10 @@ class Blueprint(object):
                 self.max_geodes(mins - self.obsbot_in(s), build_obsbot_state))
             indent -=1            
 
-            
+
         if self.claybot_in(s) != -1 and mins - self.claybot_in(s) > 0 \
-           and mins - self.claybot_in(s)> self.geobot_in(s) \
-           and  build_claybot_state.ores >= 0 \
-           and s.claybots < self.obsbot_cost[1]:
+           and build_claybot_state.ores >= 0  \
+           and s.claybots <= self.obsbot_cost[0]+5:
             D(f"+Claybot w {mins=} to go ends on {mins-self.claybot_in(s)} to go {build_claybot_state}")
             indent +=1            
             candidates.append(
@@ -144,8 +145,7 @@ class Blueprint(object):
             indent -=1            
 
         if self.orebot_in(s) != -1 and  mins - self.orebot_in(s) > 0 \
-           and mins - self.orebot_in(s) > self.geobot_in(s) and build_orebot_state.ores >= 0 \
-           and s.orebots < max([self.obsbot_cost[0], self.claybot_cost, self.geobot_cost[0]]): 
+           and s.orebots < max([self.claybot_cost, self.obsbot_cost[0], self.geobot_cost[0]])*2:
             D(f"+Orebot {mins-self.orebot_in(s)}→{build_orebot_state}")
             indent +=1
             candidates.append(
@@ -188,6 +188,11 @@ else:
 
 bps = read_input(filename)
 
+qualities = []
 for bp in bps:
     D(f"{str(bp)=}")
-    print(f"{mins=} {bp.max_geodes(mins)=}")
+    max_for_bp = bp.max_geodes(mins)
+    print(f"{mins=} in {bp.name=}: {max_for_bp=}")
+    qualities.append(max_for_bp*int(bp.name))
+
+print(sum(qualities))
