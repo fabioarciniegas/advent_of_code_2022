@@ -123,7 +123,7 @@ class Blueprint(object):
 
         if self.orebot_in(s) != -1 and  mins - self.orebot_in(s) > 0 \
            and self.upper_bound(mins-self.orebot_in(s),build_orebot_state) > self.lower_bound_geodes \
-           and s.orebots < max([self.claybot_cost, self.obsbot_cost[0], self.geobot_cost[0]])*4:
+           and s.orebots < max([self.claybot_cost, self.obsbot_cost[0], self.geobot_cost[0]]):
             D(f"+Orebot {mins-self.orebot_in(s)}→{build_orebot_state}")
             candidates.append(
                 self.max_geodes(mins - self.orebot_in(s), build_orebot_state))
@@ -132,7 +132,7 @@ class Blueprint(object):
         if self.claybot_in(s) != -1 and mins - self.claybot_in(s) > 0 \
            and self.upper_bound(mins-self.claybot_in(s),build_claybot_state) > self.lower_bound_geodes \
            and build_claybot_state.ores >= 0  \
-           and s.claybots <= self.obsbot_cost[0]*2:
+           and s.claybots <= self.obsbot_cost[0]*10:
             D(f"+Claybot w {mins=} to go ends on {mins-self.claybot_in(s)} to go {build_claybot_state}")
             candidates.append(
                 self.max_geodes(mins - self.claybot_in(s),
@@ -141,7 +141,7 @@ class Blueprint(object):
         if s.claybots > 0 and self.obsbot_in(s) != -1 and mins - self.obsbot_in(s) > 0 \
            and self.upper_bound(mins-self.obsbot_in(s),build_obsbot_state) > self.lower_bound_geodes \
            and build_obsbot_state.clays >= 0 and build_obsbot_state.ores >= 0 \
-           and s.obsbots <= self.geobot_cost[1]*2:
+           and s.obsbots <= self.geobot_cost[1]*10:
             D(f"+Obsbot w {mins=} to go ends on minute  {mins-self.obsbot_in(s)} to go {build_obsbot_state}"
               )
             candidates.append(
