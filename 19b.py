@@ -10,7 +10,6 @@ from dataclasses import dataclass
 from dataclasses import replace
 
 np.set_printoptions(threshold=np.inf, linewidth=1000)
-indent = 0
 
 @dataclass
 class State:
@@ -32,6 +31,7 @@ class Blueprint(object):
         self.claybot_cost = claybot
         self.obsbot_cost = obsidianbot
         self.geobot_cost = geodebot
+        self.lower_bound_geodes = 0
 
     def time_to_n_ores(self, n, s):
         if s.ores >= n: return 0
@@ -72,10 +72,13 @@ class Blueprint(object):
     def __str__(self):
         return f"{self.name}: {self.orebot_cost=} {self.claybot_cost=} {self.obsbot_cost=} {self.geobot_cost=}"
 
+    # this optimization after completing, thanks to @Boojum 
+    @classmethod
+    def upper_bound(cls,mins,state):
+        return state.geodes + state.geobots*mins + (mins*(mins-1))/2
+    
     def max_geodes(self, mins, s=State()):
-        global indent
-        indent +=1
-        D(f"{' '*indent}{mins=} {s=}")
+        D(f"{mins=} {s=}")
         if mins <= 0: return s.geodes
         #        D(f"{s} so {self.orebot_in(s)=}")
         max_g = s.geodes + s.geobots * mins # if nothing else just crack geodes for remaining time
@@ -119,46 +122,42 @@ class Blueprint(object):
 
 
         if self.orebot_in(s) != -1 and  mins - self.orebot_in(s) > 0 \
+           and self.upper_bound(mins-self.orebot_in(s),build_orebot_state) > self.lower_bound_geodes \
            and s.orebots < max([self.claybot_cost, self.obsbot_cost[0], self.geobot_cost[0]])*4:
             D(f"+Orebot {mins-self.orebot_in(s)}→{build_orebot_state}")
-            indent +=1
             candidates.append(
                 self.max_geodes(mins - self.orebot_in(s), build_orebot_state))
-            indent -=1            
 
 
         if self.claybot_in(s) != -1 and mins - self.claybot_in(s) > 0 \
+           and self.upper_bound(mins-self.claybot_in(s),build_claybot_state) > self.lower_bound_geodes \
            and build_claybot_state.ores >= 0  \
            and s.claybots <= self.obsbot_cost[0]*2:
             D(f"+Claybot w {mins=} to go ends on {mins-self.claybot_in(s)} to go {build_claybot_state}")
-            indent +=1            
             candidates.append(
                 self.max_geodes(mins - self.claybot_in(s),
                                 build_claybot_state))
-            indent -=1
             
-        if self.claybots > 0 and self.obsbot_in(s) != -1 and mins - self.obsbot_in(s) > 0 \
+        if s.claybots > 0 and self.obsbot_in(s) != -1 and mins - self.obsbot_in(s) > 0 \
+           and self.upper_bound(mins-self.obsbot_in(s),build_obsbot_state) > self.lower_bound_geodes \
            and build_obsbot_state.clays >= 0 and build_obsbot_state.ores >= 0 \
            and s.obsbots <= self.geobot_cost[1]*2:
             D(f"+Obsbot w {mins=} to go ends on minute  {mins-self.obsbot_in(s)} to go {build_obsbot_state}"
               )
-            indent +=1
             candidates.append(
                 self.max_geodes(mins - self.obsbot_in(s), build_obsbot_state))
-            indent -=1            
 
-        if self.obsbots > 0 and self.geobot_in(s) != -1 and mins - self.geobot_in(s) > 0 \
+        if s.obsbots > 0 and self.geobot_in(s) != -1 and mins - self.geobot_in(s) > 0 \
+           and self.upper_bound(mins-self.geobot_in(s),build_geobot_state) > self.lower_bound_geodes \
            and build_geobot_state.ores >= 0 and build_geobot_state.obsis >= 0 :
             D(f"+Geobot with {mins=} to go ends on  {mins-self.geobot_in(s)} to go , {build_geobot_state}"
               )
-            indent +=1
             candidates.append(
                 self.max_geodes(mins - self.geobot_in(s), build_geobot_state))
-            indent -=1
 
-        indent -=1
         D(candidates)
-        return max(candidates)
+        self.lower_bound_geodes = max(max(candidates),self.lower_bound_geodes)
+        return self.lower_bound_geodes
 
 
 def read_input(filename):
@@ -192,10 +191,10 @@ else:
 bps = read_input(filename)
 
 qualities = []
-for bp in bps[0:]:
+for bp in bps[0:3]:
     D(f"{str(bp)=}")
     max_for_bp = bp.max_geodes(mins)
     print(f"{mins=} in {bp.name=}: {max_for_bp=}")
-    qualities.append(max_for_bp*int(bp.name))
+    qualities.append(max_for_bp)
 
 print(reduce(mul,qualities))
