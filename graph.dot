@@ -1,0 +1,22 @@
+strict graph "" {
+	AA	[node_attr="{'flow': '0'}"];
+	BB	[node_attr="{'flow': '13'}"];
+	AA -- BB	[weight=1];
+	DD	[node_attr="{'flow': '20'}"];
+	AA -- DD	[weight=1];
+	II	[node_attr="{'flow': '0'}"];
+	AA -- II	[weight=1];
+	CC	[node_attr="{'flow': '2'}"];
+	BB -- CC	[weight=1];
+	CC -- DD	[weight=1];
+	EE	[node_attr="{'flow': '3'}"];
+	DD -- EE	[weight=1];
+	FF	[node_attr="{'flow': '0'}"];
+	EE -- FF	[weight=1];
+	GG	[node_attr="{'flow': '0'}"];
+	FF -- GG	[weight=1];
+	HH	[node_attr="{'flow': '22'}"];
+	GG -- HH	[weight=1];
+	JJ	[node_attr="{'flow': '21'}"];
+	II -- JJ	[weight=1];
+}
