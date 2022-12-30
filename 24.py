@@ -95,6 +95,13 @@ else:
 board = read_input(filename)
 print_board(board)
 
+start = (-1, 0)
+end = (board.shape[0], board.shape[1] - 1)
 
-print(solve(board,(-1, 0), (board.shape[0], board.shape[1] - 1), 1))
-#print(solve(start, goal, solve(goal, start, s1)))
+one_way = solve(board, start, end, 1)
+
+print(one_way)
+back_to_start = solve(board,end,start,one_way)
+print(back_to_start)
+print(solve(board,start,end,back_to_start))
+
