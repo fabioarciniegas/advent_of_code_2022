@@ -62,7 +62,7 @@ def print_board(board,sequence=0):
             elif board[i][j] > ELF and board[i][j] > ELF+6:
                 print("x", end="")
         print()
-    cv2.imwrite(f"23_{sequence}.png",board)
+        cv2.imwrite(f"23_{sequence:03}.png",board)
 
 
 
@@ -244,7 +244,7 @@ for i in range(t,b+1):
 
 
 for round_x in range(1000):
-#    print_board(board,round_x)
+    print_board(board,round_x)
     alones = 0
     l,r,t,b = bounding_rect(board)
     for i in range(t,b+1):
@@ -303,10 +303,3 @@ for i in range(t,b+1):
         empties += board[i][j] < ELF
 
 print(empties)
-
-    
-exit(2)
-
-
-    
-
