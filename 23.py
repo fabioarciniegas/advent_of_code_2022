@@ -5,11 +5,17 @@ import sys
 import logging
 from logging import debug as D
 from logging import warning as W
+from PIL import Image
+import cv2
 
 np.set_printoptions(threshold=np.inf, linewidth=1000)
 
 offset_h = 0
 offset_v = 0
+
+ELF = 200
+PROPELF = 15
+EMPTY = 0
 
 def read_input(filename):
     f = open(filename)
@@ -34,26 +40,30 @@ def read_input(filename):
         j = 0
         for c in l:
             if c == "#":
-                board[i+offset_v][j+offset_h] = 2
+                board[i+offset_v][j+offset_h] = ELF
             elif c == ".":
-                board[i+offset_v][j+offset_h] = 0
+                board[i+offset_v][j+offset_h] = EMPTY
             j += 1
         i += 1
     return board
 
 
-def print_board(board):
+def print_board(board,sequence=0):
     for i in range(len(board)):
         for j in range(len(board[i])):
-            if board[i][j] == 0:
+            if board[i][j] == EMPTY:
                 print(" ", end="")
-            elif board[i][j] == 1:
+            elif board[i][j] > EMPTY and board[i][j] < ELF:
                 print(".", end="")
-            elif board[i][j] == 2:
+            elif board[i][j] == ELF:
                 print("#", end="")
-            else:
-                print(board[i][j], end="")
+            elif board[i][j] > ELF and board[i][j] < ELF+6:
+                print("o", end="")
+            elif board[i][j] > ELF and board[i][j] > ELF+6:
+                print("x", end="")
         print()
+    cv2.imwrite(f"23_{sequence}.png",board)
+
 
 
 def bounding_rect(board):
@@ -75,7 +85,7 @@ def check_neighbors(board,i,j):
     n["SW"] = board[i+1][j-1]    
     n["S"] = board[i+1][j]
     n["SE"] = board[i+1][j+1]
-    return max([ n[x] for x in n]) == 0,n
+    return max([ n[x] for x in n]) < ELF,n
 
 def move(inst, board, pos, direction):
     if inst == "L":
@@ -191,31 +201,110 @@ else:
 
 board = read_input(filename)
 
-print_board(board)
+#print_board(board)
 bounding_rect(board)
 
+def rule_north(i,j,n):
+    if n["NW"] < ELF and n["N"] < ELF and n["NE"] < ELF:
+        D(f"Elf proposing to move north from {i=} {j=}")
+        board[i-1][j] += PROPELF
+        return True
+    return False
+
+def rule_south(i,j,n):
+    if n["SW"] < ELF and n["S"] < ELF and n["SE"] < ELF:
+        D(f"Elf proposing to move south from {i=} {j=}")
+        board[i+1][j] += PROPELF
+        return True
+    return False
+
+def rule_west(i,j,n):
+    if n["W"] < ELF and n["NW"] < ELF and n["SW"] < ELF:
+        D(f"Elf proposing to move west from {i=} {j=}")
+        board[i][j-1] += PROPELF
+        return True
+    return False
+
+def rule_east(i,j,n):
+    if n["E"] < ELF and n["NE"] < ELF and n["SE"] < ELF:
+        D(f"Elf proposing to move east from {i=} {j=}")
+        board[i][j+1] += PROPELF
+        return True
+    return False
+
+rules = [rule_north,rule_south,rule_west,rule_east]
+        
+active_rule = 0
+num_elves = 0
+
+l,r,t,b = bounding_rect(board)
+for i in range(t,b+1):
+    for j in range(l,r+1):
+        num_elves += board[i][j] == ELF
 
 
-for rounds in range(10):
+for round_x in range(1000):
+#    print_board(board,round_x)
+    alones = 0
     l,r,t,b = bounding_rect(board)
-    for i in range(t,b):
-        for j in range(l,r):
+    for i in range(t,b+1):
+        for j in range(l,r+1):
+            if board[i][j] < ELF:
+                continue
             alone, n = check_neighbors(board,i,j)
             if alone:
-                D(f"Elf alone at {i=} {j=}")
-            elif n["NW"] == 0 and n["N"] == 0 and n["NE"] and active_rule == 0:
-                D(f"Elf proposing to move north from {i=} {j=}")
-                board[i-1][j]=2
-            elif n["SW"] == 0 and n["S"] == 0 and n["SE"] and active_rule == 1:
-                D(f"Elf proposing to move south from {i=} {j=}")
-                board[i+1][j]=2
-            elif n["W"] == 0 and n["NW"] == 0 and n["SW"] and active_rule == 2:
-                D(f"Elf proposing to move north from {i=} {j=}")
-                board[i][j-1]=2
-            elif n["E"] == 0 and n["NE"] == 0 and n["SE"] and active_rule == 0:
-                D(f"Elf proposing to move north from {i=} {j=}")
-                board[i][j+1]=2
-                
+              alones += 1
+            if alones == num_elves:
+                print(f"static at round {round_x}")
+            D(f"{i=} {j=}: {n=}")
+            tries = 0
+            if alone:
+                continue
+            while tries < 4:
+                if rules[(active_rule+tries)%4](i,j,n):
+                    board[i][j] = ELF+(((active_rule+tries)%4)+1)
+                    break
+                tries += 1
+ #   print_board(board,round_x)
+    l,r,t,b = bounding_rect(board)
+    for i in range(t,b+1):
+        for j in range(l,r+1):
+            if board[i][j] <= ELF:
+                continue
+            alone, n = check_neighbors(board,i,j)
+            tried = board[i][j] - ELF
+            if n["N"] == PROPELF and tried == 1:
+                D(f"Only elf to propose move north was {i=} {j=}")
+                board[i][j] = EMPTY
+                board[i-1][j] = ELF
+            elif n["S"] == PROPELF and tried == 2:
+                D(f"Only elf to propose move south was {i=} {j=}")
+                board[i][j] = EMPTY                
+                board[i+1][j] = ELF
+            elif n["W"] == PROPELF and tried == 3:
+                D(f"Only elf to propose move west was {i=} {j=}")
+                board[i][j] = EMPTY                
+                board[i][j-1] = ELF
+            elif n["E"] == PROPELF and tried == 4:
+                D(f"Only elf to propose move east was {i=} {j=}")
+                board[i][j] = EMPTY                
+                board[i][j+1] = ELF
+
+    board[np.where((board > 0) & (board < ELF))] = 0
+    board[np.where((board > 0) & (board > ELF))] = ELF
+#    board[] = EMPTY
+    active_rule = (active_rule +1)%4
+
+#print_board(board,round_x)
+empties = 0
+l,r,t,b = bounding_rect(board)
+for i in range(t,b+1):
+    for j in range(l,r+1):
+        empties += board[i][j] < ELF
+
+print(empties)
+
+    
 exit(2)
 
 
